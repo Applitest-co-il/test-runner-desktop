@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApplitestLocalRunner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Applitest Local Runner</h1>
+      </header>
+
+      <main>
+        <div class="control-panel">
+          <h2>Local Runner Control</h2>
+          <div class="button-group">
+            <button id="start-btn" class="btn btn-primary">
+              <span class="btn-icon">▶</span>
+              Start
+            </button>
+            <button id="stop-btn" class="btn btn-secondary" disabled>
+              <span class="btn-icon">⏹</span>
+              Stop
+            </button>
+          </div>
+          <div class="local-runner-status">
+            <div class="status-row">
+              <span>Local runner Status:</span>
+              <div
+                id="local-runner-status-dot"
+                class="status-dot stopped"
+              ></div>
+              <span id="local-runner-status-text">Stopped</span>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <h3>Local Appium & Emulator Control</h3>
+          <div class="appium-config">
+            <label for="device-avd">Device AVD ID:</label>
+            <input
+              type="text"
+              id="device-avd"
+              class="input-field"
+              value="Pixel_Tablet_API_34"
+              placeholder="Enter AVD device name"
+            />
+          </div>
+          <div class="button-group">
+            <button id="start-appium-btn" class="btn btn-primary">
+              <span class="btn-icon">▶</span>
+              Start
+            </button>
+            <button id="stop-appium-btn" class="btn btn-secondary" disabled>
+              <span class="btn-icon">⏹</span>
+              Stop
+            </button>
+          </div>
+          <div class="appium-status">
+            <div class="status-row">
+              <span>Appium Server:</span>
+              <div id="appium-status-dot" class="status-dot stopped"></div>
+              <span id="appium-status-text">Stopped</span>
+            </div>
+            <div class="status-row">
+              <span>Android Emulator:</span>
+              <div id="emulator-status-dot" class="status-dot stopped"></div>
+              <span id="emulator-status-text">Stopped</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="log-panel">
+          <div class="log-header">
+            <div class="log-tabs">
+              <button class="log-tab active" data-tab="local-runner">
+                Local Runner
+              </button>
+              <button class="log-tab" data-tab="appium" style="display: none">
+                Appium
+              </button>
+              <button class="log-tab" data-tab="adb" style="display: none">
+                ADB
+              </button>
+            </div>
+            <button id="clear-logs-btn" class="btn btn-small">
+              Clear Active Logs
+            </button>
+          </div>
+          <div class="log-content">
+            <div id="local-runner-logs" class="log-container active">
+              <div class="log-entry info">
+                <span class="timestamp">[Starting up...]</span>
+                <span class="message"
+                  >Applitest Local Runner ready. Click "Start" to begin.</span
+                >
+              </div>
+            </div>
+            <div id="appium-logs" class="log-container">
+              <!-- Appium logs will appear here -->
+            </div>
+            <div id="adb-logs" class="log-container">
+              <!-- ADB logs will appear here -->
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
