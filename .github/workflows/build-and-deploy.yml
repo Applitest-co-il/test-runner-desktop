@@ -71,6 +71,8 @@ jobs:
               run: npm install
 
             - name: Build for production
+              env:
+                  USE_HARD_LINKS: false
               run: npm run build:mac
 
             - name: Configure AWS Credentials
