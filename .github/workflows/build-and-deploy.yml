@@ -11,44 +11,44 @@ on:
     #     - 'static/*'
 
 jobs:
-    # publish-win-release:
-    #     runs-on: windows-latest
+    publish-win-release:
+        runs-on: windows-latest
 
-    #     strategy:
-    #         matrix:
-    #             node-version: [20.x]
-    #             # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        strategy:
+            matrix:
+                node-version: [20.x]
+                # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
-    #     steps:
-    #         - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v3
 
-    #         - name: Use Node.js ${{ matrix.node-version }}
-    #           uses: actions/setup-node@v3
-    #           with:
-    #               node-version: ${{ matrix.node-version }}
-    #               cache: 'npm'
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: 'npm'
 
-    #         - name: Install
-    #           run: npm install
+            - name: Install
+              run: npm install
 
-    #         - name: Build for production
-    #           run: npm run build:win
+            - name: Build for production
+              run: npm run build:win
 
-    #         - name: Configure AWS Credentials
-    #           uses: aws-actions/configure-aws-credentials@v3
-    #           with:
-    #               aws-access-key-id: ${{ secrets.AWS_ACCESS }}
-    #               aws-secret-access-key: ${{ secrets.AWS_SECRET }}
-    #               aws-region: eu-west-1
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v3
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+                  aws-region: eu-west-1
 
-    #         - name: Deploy to S3
-    #           run: |
-    #               echo "Copy to sync folder"
-    #               mkdir -p ./dist/sync
-    #               cp ./dist/ApplitestLocalRunner* ./dist/sync
-    #               echo "Syncing to S3"
-    #               aws s3 sync ./dist/sync s3://${{ vars.AWS_S3 }}/downloads
-    #               aws cloudfront create-invalidation --distribution-id=${{ vars.AWS_CLOUDFRONT }}  --paths "/downloads/*"
+            - name: Deploy to S3
+              run: |
+                  echo "Copy to sync folder"
+                  mkdir -p ./dist/sync
+                  cp ./dist/ApplitestLocalRunner* ./dist/sync
+                  echo "Syncing to S3"
+                  aws s3 sync ./dist/sync s3://${{ vars.AWS_S3 }}/downloads
+                  aws cloudfront create-invalidation --distribution-id=${{ vars.AWS_CLOUDFRONT }}  --paths "/downloads/*"
 
     publish-macos-release:
         runs-on: macos-latest
