@@ -8,7 +8,7 @@
         "dev": "electron . --dev",
         "clean-mac": "rimraf dist",
         "build:win": "electron-builder --win portable",
-        "build:mac": "npm run clean-mac && electron-builder --mac dmg",
+        "build:mac": "npm run clean-mac && electron-builder --mac dmg --publish=never",
         "build:all": "electron-builder --win portable --mac dmg",
         "dist": "electron-builder --win portable --mac dmg --publish=never",
         "pack": "electron-builder --dir",
