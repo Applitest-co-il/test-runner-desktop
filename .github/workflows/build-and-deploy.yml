@@ -47,5 +47,5 @@ jobs:
                   mkdir -p ./dist/sync
                   cp ./dist/ApplitestLocalRunner* ./dist/sync
                   echo "Syncing to S3"
-                  aws s3 sync ./dist/sync s3://${{ secrets.AWS_S3 }}/downloads
-                  aws cloudfront create-invalidation --distribution-id=${{ secrets.AWS_CLOUDFRONT }}variables  --paths "/downloads/*"
+                  aws s3 sync ./dist/sync s3://${{ vars.AWS_S3 }}/downloads
+                  aws cloudfront create-invalidation --distribution-id=${{ vars.AWS_CLOUDFRONT }}  --paths "/downloads/*"
