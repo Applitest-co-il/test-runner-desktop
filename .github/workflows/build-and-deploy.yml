@@ -46,6 +46,12 @@ jobs:
                   AWS_S3: ${{ secrets.AWS_S3 }}
                   AWS_CLOUDFRONT: ${{ secrets.AWS_CLOUDFRONT }}
               run: |
+                  echo "DIR"
                   dir
-                  aws s3 sync ./dist/ApplitestLocalRunner* s3://$AWS_S3/downloads
+                  echo "DIR DIST"
+                  dir dist
+                  echo "DIR ./DIST"
+                  dir ./dist
+                  echo "Syncing to S3"
+                  aws s3 sync dist/ApplitestLocalRunner* s3://$AWS_S3/downloads
                   aws cloudfront create-invalidation --distribution-id=$AWS_CLOUDFRONT --paths "/downloads/*"
