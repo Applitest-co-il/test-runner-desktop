@@ -24,9 +24,8 @@ The app icon has been set up using the official Applitest favicon from applitest
 
 1. Create or find a 256x256 PNG image
 2. Convert to .ico format using tools like:
-
-   - <https://convertio.co/png-ico/>
-   - GIMP (free image editor)
-   - Online ICO converters
+    - <https://convertio.co/png-ico/>
+    - GIMP (free image editor)
+    - Online ICO converters
 
 3. Save as `build/icon.ico` (replacing the current file)

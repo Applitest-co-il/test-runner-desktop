@@ -29,23 +29,23 @@ npm run build:win
 
 1. **Portable Version** (No installation required)
 
-   ```bash
-   npm run build:win-portable
-   ```
+    ```bash
+    npm run build:win-portable
+    ```
 
-   - Creates a portable executable
-   - No installation needed - just run the .exe
-   - Output: `dist/Test Runner Desktop-1.0.0-portable.exe`
+    - Creates a portable executable
+    - No installation needed - just run the .exe
+    - Output: `dist/Test Runner Desktop-1.0.0-portable.exe`
 
 2. **Development Package** (For testing)
 
-   ```bash
-   npm run pack
-   ```
+    ```bash
+    npm run pack
+    ```
 
-   - Creates unpacked app directory
-   - Useful for testing before final build
-   - Output: `dist/win-unpacked/`
+    - Creates unpacked app directory
+    - Useful for testing before final build
+    - Output: `dist/win-unpacked/`
 
 ### 📁 Output Directory
 

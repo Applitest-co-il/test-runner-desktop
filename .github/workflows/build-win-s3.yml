@@ -1,0 +1,51 @@
+# This workflow will deploy to S3 with static site in place
+name: Deploy to S3
+
+on:
+    workflow_dispatch:
+
+    # push:
+    #   branches:
+    #     - 'main'
+    #   paths:
+    #     - 'src/**'
+    #     - 'static/*'
+
+jobs:
+    deploy-s3:
+        runs-on: windows-latest
+
+        strategy:
+            matrix:
+                node-version: [20.x]
+                # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: 'npm'
+
+            - name: Install
+              run: npm install
+
+            - name: Build for production
+              run: npm run build:win
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+                  aws-region: eu-west-1
+
+            - name: Deploy to S3
+              env:
+                  AWS_S3: ${{ vars.AWS_S3 }}
+                  AWS_CLOUDFRONT: ${{ vars.AWS_CLOUDFRONT}}
+              run: |
+                  aws s3 sync ./dist/ApplitestLocalRunner* s3://$AWS_S3/downloads
+                  aws cloudfront create-invalidation --distribution-id=$AWS_CLOUDFRONT --paths "/downloads/*"
