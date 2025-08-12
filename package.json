@@ -82,9 +82,7 @@
             "!node_modules/**/.{nyc_output,coverage}/**/*",
             "!node_modules/**/coverage/**/*"
         ],
-        "extraResources": [
-            ".env"
-        ],
+        "extraResources": [],
         "win": {
             "target": [
                 {
