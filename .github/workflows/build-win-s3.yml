@@ -1,6 +1,5 @@
 # This workflow will deploy to S3 with static site in place
-name: Deploy to S3
-
+name: Publish package releases
 on:
     workflow_dispatch:
 
@@ -12,7 +11,7 @@ on:
     #     - 'static/*'
 
 jobs:
-    deploy-s3:
+    publish-win-release:
         runs-on: windows-latest
 
         strategy:
@@ -47,5 +46,5 @@ jobs:
                   AWS_S3: ${{ vars.AWS_S3 }}
                   AWS_CLOUDFRONT: ${{ vars.AWS_CLOUDFRONT}}
               run: |
-                  aws s3 sync ./dist/ApplitestLocalRunner* s3://$AWS_S3/downloads
+                  aws s3 sync .\dist\ApplitestLocalRunner* s3://$AWS_S3/downloads
                   aws cloudfront create-invalidation --distribution-id=$AWS_CLOUDFRONT --paths "/downloads/*"
