@@ -1,6 +1,6 @@
 {
     "name": "test-runner-desktop",
-    "version": "1.0.0",
+    "version": "0.9.90",
     "description": "Desktop frontend for @applitest/test-runner",
     "main": "src/main.js",
     "scripts": {
@@ -142,10 +142,11 @@
                     "type": "link",
                     "path": "/Applications"
                 }
-            ]
+            ],
+            "artifactName": "${productName}-mac.${ext}"
         },
         "portable": {
-            "artifactName": "${productName}-${version}.${ext}"
+            "artifactName": "${productName}-win.${ext}"
         }
     }
 }
