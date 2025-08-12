@@ -65,9 +65,8 @@
             "node_modules/zip-stream/**/*",
             "node_modules/archiver/**/*",
             "node_modules/readable-stream/**/*",
-            "node_modules/@applitest/test-runner/lib/**/*",
-            "node_modules/@applitest/test-runner/dist/**/*",
-            "node_modules/@ffmpeg-installer/darwin-arm64/ffmpeg"
+            "node_modules/@ffmpeg/darwin-arm64/ffmpeg",
+            "node_modules/@applitest/test-runner/lib/**/*"
         ],
         "includeSubNodeModules": true,
         "buildDependenciesFromSource": false,
