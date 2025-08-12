@@ -1,5 +1,5 @@
 # This workflow will deploy to S3 with static site in place
-name: Publish package releases
+name: Build and deploy package releases
 on:
     workflow_dispatch:
 
