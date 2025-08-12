@@ -109,7 +109,7 @@
                     ]
                 }
             ],
-            "icon": "build/icon-256.png",
+            "icon": "build/icon-512.png",
             "category": "public.app-category.developer-tools",
             "hardenedRuntime": true,
             "gatekeeperAssess": false,
