@@ -65,7 +65,8 @@
             "node_modules/zip-stream/**/*",
             "node_modules/archiver/**/*",
             "node_modules/readable-stream/**/*",
-            "node_modules/@applitest/test-runner/**/*"
+            "node_modules/@applitest/test-runner/lib/**/*",
+            "node_modules/@applitest/test-runner/dist/**/*"
         ],
         "includeSubNodeModules": true,
         "buildDependenciesFromSource": false,
