@@ -13,6 +13,7 @@ class TestRunnerUI {
         this.bindEvents();
         this.updateServerStatus();
         this.updateAppiumStatus();
+        this.loadLibVersion();
     }
 
     bindElements() {
@@ -41,6 +42,9 @@ class TestRunnerUI {
         this.appiumStatusDot = document.getElementById('appium-status-dot');
         this.emulatorStatusText = document.getElementById('emulator-status-text');
         this.emulatorStatusDot = document.getElementById('emulator-status-dot');
+
+        // Version element
+        this.libVersionElement = document.getElementById('lib-version');
     }
 
     bindEvents() {
@@ -335,6 +339,20 @@ class TestRunnerUI {
             this.addLogEntry('local-runner', 'info', 'Logs cleared');
         } else {
             this.addLogEntry(this.activeLogTab, 'info', `${this.activeLogTab.toUpperCase()} logs cleared`);
+        }
+    }
+
+    async loadLibVersion() {
+        try {
+            const result = await window.electronAPI.getLibVersion();
+            if (result.success) {
+                this.libVersionElement.textContent = `v${result.version}`;
+            } else {
+                this.libVersionElement.textContent = 'v?';
+            }
+        } catch (error) {
+            console.error('Failed to load lib version:', error);
+            this.libVersionElement.textContent = 'v?';
         }
     }
 

@@ -5,11 +5,15 @@ const express = require('express');
 const cors = require('cors');
 
 const { downloadFile } = require('./download-file.js');
-const { runTests, testApiCall } = require('@applitest/test-runner');
+const { runTests, testApiCall, libVersion } = require('@applitest/test-runner');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '500KB' }));
+
+app.get('/version', (_, res) => {
+    res.status(200).json({ version: libVersion.version });
+});
 
 app.patch('/test-runner', async (req, res) => {
     console.log('Test runner started');

@@ -173,13 +173,13 @@ app.on('window-all-closed', async () => {
     // Ensure server is stopped when app is closing
     const serverResult = await killServerProcess(3000);
     if (!serverResult.success) {
-        console.error('Failed to stop server during app quit:', serverResult.message);
+        console.warn('Failed to stop server during app quit:', serverResult.message);
     }
 
     // Ensure Appium processes are stopped when app is closing
     const appiumResult = await stopAppiumProcess();
     if (!appiumResult.success) {
-        console.error('Failed to stop Appium during app quit:', appiumResult.message);
+        console.warn('Failed to stop Appium during app quit:', appiumResult.message);
     }
 
     if (process.platform !== 'darwin') {
@@ -194,6 +194,16 @@ app.on('activate', () => {
 });
 
 // IPC handlers for server control
+ipcMain.handle('get-lib-version', async () => {
+    try {
+        const { libVersion } = require('@applitest/test-runner');
+        return { success: true, version: libVersion.version };
+    } catch (error) {
+        console.error('Error getting lib version:', error);
+        return { success: false, version: 'Unknown' };
+    }
+});
+
 ipcMain.handle('start-server', async () => {
     if (serverProcess) {
         return { success: false, message: 'Server is already running' };
@@ -318,7 +328,7 @@ async function startAppiumProcess(deviceAvd) {
         // Check if port 4723 is already in use and kill any processes using it
         const portFreed = await forceKillProcessOnPort(4723);
         if (portFreed) {
-            if (mainWindow) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('appium-log', {
                     type: 'info',
                     message: 'Cleared existing process from Appium port 4723'
@@ -337,7 +347,7 @@ async function startAppiumProcess(deviceAvd) {
         appiumProcess.stdout.on('data', (data) => {
             const message = data.toString();
             console.log('Appium:', message);
-            if (mainWindow) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('appium-log', {
                     type: 'info',
                     message: message.trim()
@@ -348,7 +358,7 @@ async function startAppiumProcess(deviceAvd) {
         appiumProcess.stderr.on('data', (data) => {
             const message = data.toString();
             console.error('Appium Error:', message);
-            if (mainWindow) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('appium-log', {
                     type: 'error',
                     message: message.trim()
@@ -359,7 +369,7 @@ async function startAppiumProcess(deviceAvd) {
         appiumProcess.on('close', (code) => {
             console.log(`Appium process exited with code ${code}`);
             appiumProcess = null;
-            if (mainWindow) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('appium-status', {
                     appiumRunning: false,
                     emulatorRunning: emulatorProcess !== null
@@ -381,7 +391,7 @@ async function startAppiumProcess(deviceAvd) {
         emulatorProcess.stdout.on('data', (data) => {
             const message = data.toString();
             console.log('Emulator:', message);
-            if (mainWindow) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('adb-log', {
                     type: 'info',
                     message: message.trim()
@@ -392,7 +402,7 @@ async function startAppiumProcess(deviceAvd) {
         emulatorProcess.stderr.on('data', (data) => {
             const message = data.toString();
             console.error('Emulator Error:', message);
-            if (mainWindow) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('adb-log', {
                     type: 'warning',
                     message: message.trim()
@@ -403,7 +413,7 @@ async function startAppiumProcess(deviceAvd) {
         emulatorProcess.on('close', (code) => {
             console.log(`Emulator process exited with code ${code}`);
             emulatorProcess = null;
-            if (mainWindow) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('appium-status', {
                     appiumRunning: appiumProcess !== null,
                     emulatorRunning: false
@@ -416,7 +426,7 @@ async function startAppiumProcess(deviceAvd) {
         });
 
         // Notify UI of status change
-        if (mainWindow) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('appium-status', {
                 appiumRunning: true,
                 emulatorRunning: true
@@ -494,7 +504,7 @@ async function forceKillProcessOnPort(port) {
                     killProcess.on('close', resolve);
                 });
 
-                if (mainWindow) {
+                if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send('appium-log', {
                         type: 'info',
                         message: `Force killed process ${pid} using port ${port}`
@@ -540,7 +550,8 @@ async function forceKillAppiumProcesses() {
             killAppiumCmd.on('close', resolve);
         });
 
-        if (mainWindow) {
+        // Only send message if mainWindow exists and is not destroyed
+        if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('appium-log', {
                 type: 'info',
                 message: 'Force killed any remaining Appium processes'
@@ -566,7 +577,7 @@ async function stopAppiumProcess() {
                 });
 
                 // Log ADB shutdown attempt
-                if (mainWindow) {
+                if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send('adb-log', {
                         type: 'info',
                         message: 'Sending graceful shutdown command to emulator...'
@@ -574,7 +585,7 @@ async function stopAppiumProcess() {
                 }
 
                 adbKillProcess.stdout.on('data', (data) => {
-                    if (mainWindow) {
+                    if (mainWindow && !mainWindow.isDestroyed()) {
                         mainWindow.webContents.send('adb-log', {
                             type: 'info',
                             message: data.toString().trim()
@@ -583,7 +594,7 @@ async function stopAppiumProcess() {
                 });
 
                 adbKillProcess.stderr.on('data', (data) => {
-                    if (mainWindow) {
+                    if (mainWindow && !mainWindow.isDestroyed()) {
                         mainWindow.webContents.send('adb-log', {
                             type: 'warning',
                             message: data.toString().trim()
@@ -603,7 +614,7 @@ async function stopAppiumProcess() {
                 results.push('Emulator gracefully shut down via ADB');
             } catch (adbError) {
                 console.warn('ADB graceful shutdown failed, proceeding with force kill:', adbError);
-                if (mainWindow) {
+                if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send('adb-log', {
                         type: 'warning',
                         message: 'ADB graceful shutdown failed, using force kill...'
@@ -646,8 +657,8 @@ async function stopAppiumProcess() {
             results.push('Freed Appium port 4723');
         }
 
-        // Notify UI
-        if (mainWindow) {
+        // Notify UI only if window exists and is not destroyed
+        if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('appium-status', {
                 appiumRunning: false,
                 emulatorRunning: false
@@ -665,7 +676,16 @@ async function stopAppiumProcess() {
             message: results.length > 0 ? results.join(', ') : 'Appium and emulator were not running'
         };
     } catch (error) {
-        console.error('Failed to stop Appium:', error);
+        // Don't log as error if services weren't running
+        if (error.message.includes('Object has been destroyed') || 
+            (!appiumProcess && !emulatorProcess)) {
+            return {
+                success: true,
+                message: 'Appium and emulator were not running'
+            };
+        }
+        
+        console.warn('Failed to stop Appium:', error);
         return {
             success: false,
             message: `Failed to stop Appium: ${error.message}`

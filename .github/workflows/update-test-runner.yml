@@ -1,0 +1,45 @@
+# this workflow will update @applitest/test-runner to the latest version
+name: Update Test Runner
+
+on:
+    workflow_dispatch:
+
+jobs:
+    update-test-runner:
+        runs-on: ubuntu-latest
+        outputs:
+            newrev: ${{ steps.commit.outputs.newrev }}
+
+        strategy:
+            matrix:
+                node-version: [20.x]
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Update @applitest/test-runner
+              run: npm install @applitest/test-runner@latest
+
+            - name: Commit changes
+              id: commit
+              run: |
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  git add package.json package-lock.json
+                  git commit -m 'chore: update @applitest/test-runner to latest version'
+                  git push
+                  echo "Rev: $(git rev-parse HEAD)"
+                  echo "newrev=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+    build-deploy:
+        needs: update-test-runner
+        uses: ./.github/workflows/build-and-deploy.yml
+        with:
+            ref: ${{ needs.update-test-runner.outputs.newrev }}
+        secrets: inherit

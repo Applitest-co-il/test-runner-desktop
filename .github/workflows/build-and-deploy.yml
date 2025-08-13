@@ -3,6 +3,13 @@ name: Build and deploy package releases
 on:
     workflow_dispatch:
 
+    workflow_call:
+        inputs:
+            ref:
+                required: false
+                type: string
+                description: 'The commit SHA to checkout'
+
     # push:
     #   branches:
     #     - 'main'
@@ -21,6 +28,9 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: ${{ inputs.ref }}
 
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v4

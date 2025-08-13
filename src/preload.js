@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     startServer: () => ipcRenderer.invoke('start-server'),
     stopServer: () => ipcRenderer.invoke('stop-server'),
     getServerStatus: () => ipcRenderer.invoke('get-server-status'),
+    getLibVersion: () => ipcRenderer.invoke('get-lib-version'),
 
     // Appium APIs
     startAppium: (deviceAvd) => ipcRenderer.invoke('start-appium', deviceAvd),
