@@ -677,14 +677,13 @@ async function stopAppiumProcess() {
         };
     } catch (error) {
         // Don't log as error if services weren't running
-        if (error.message.includes('Object has been destroyed') || 
-            (!appiumProcess && !emulatorProcess)) {
+        if (error.message.includes('Object has been destroyed') || (!appiumProcess && !emulatorProcess)) {
             return {
                 success: true,
                 message: 'Appium and emulator were not running'
             };
         }
-        
+
         console.warn('Failed to stop Appium:', error);
         return {
             success: false,
