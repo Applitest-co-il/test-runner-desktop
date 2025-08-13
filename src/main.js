@@ -171,19 +171,23 @@ app.whenReady().then(createWindow);
 
 app.on('window-all-closed', async () => {
     // Ensure server is stopped when app is closing
-    const serverResult = await killServerProcess(3000);
-    if (!serverResult.success) {
-        console.warn('Failed to stop server during app quit:', serverResult.message);
-    }
+    try {
+        const serverResult = await killServerProcess(3000);
+        if (!serverResult.success) {
+            console.warn('Failed to stop server during app quit:', serverResult.message);
+        }
 
-    // Ensure Appium processes are stopped when app is closing
-    const appiumResult = await stopAppiumProcess();
-    if (!appiumResult.success) {
-        console.warn('Failed to stop Appium during app quit:', appiumResult.message);
-    }
+        // Ensure Appium processes are stopped when app is closing
+        const appiumResult = await stopAppiumProcess();
+        if (!appiumResult.success) {
+            console.warn('Failed to stop Appium during app quit:', appiumResult.message);
+        }
 
-    if (process.platform !== 'darwin') {
-        app.quit();
+        if (process.platform !== 'darwin') {
+            app.quit();
+        }
+    } catch (error) {
+        console.warn('Error stopping server during app quit:', error);
     }
 });
 
@@ -339,10 +343,17 @@ async function startAppiumProcess(deviceAvd) {
         }
 
         // Start Appium server
-        appiumProcess = spawn('powershell.exe', ['-Command', 'appium --relaxed-security'], {
-            detached: false,
-            stdio: ['ignore', 'pipe', 'pipe']
-        });
+        if (process.platform === 'win32') {
+            appiumProcess = spawn('powershell.exe', ['-Command', 'appium --relaxed-security'], {
+                detached: false,
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+        } else {
+            appiumProcess = spawn('appium', ['--relaxed-security'], {
+                detached: false,
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+        }
 
         appiumProcess.stdout.on('data', (data) => {
             const message = data.toString();
@@ -382,7 +393,8 @@ async function startAppiumProcess(deviceAvd) {
         });
 
         // Start Android Emulator
-        const emulatorPath = path.join(process.env.ANDROID_HOME, 'emulator', 'emulator.exe');
+        const emulatorExecutable = process.platform === 'win32' ? 'emulator.exe' : 'emulator';
+        const emulatorPath = path.join(process.env.ANDROID_HOME, 'emulator', emulatorExecutable);
         emulatorProcess = spawn(emulatorPath, ['-avd', deviceAvd], {
             detached: false,
             stdio: ['ignore', 'pipe', 'pipe']
@@ -472,50 +484,92 @@ function waitForProcessExit(process, timeoutMs = 5000) {
 // Helper function to force kill process on specific port
 async function forceKillProcessOnPort(port) {
     try {
-        // Find process using the port
-        const findProcess = spawn('netstat', ['-ano'], {
-            stdio: ['ignore', 'pipe', 'pipe']
-        });
-
-        let netstatOutput = '';
-        findProcess.stdout.on('data', (data) => {
-            netstatOutput += data.toString();
-        });
-
-        await new Promise((resolve) => {
-            findProcess.on('close', resolve);
-        });
-
-        // Parse netstat output to find PID using the port
-        const lines = netstatOutput.split('\n');
-        const portLine = lines.find((line) => line.includes(`:${port}`) && line.includes('LISTENING'));
-
-        if (portLine) {
-            const parts = portLine.trim().split(/\s+/);
-            const pid = parts[parts.length - 1];
-
-            if (pid && pid !== '0') {
-                // Kill the process
-                const killProcess = spawn('taskkill', ['/F', '/PID', pid], {
+        if (process.platform !== 'win32') {
+            // For non-Windows platforms, use different approach
+            try {
+                const findProcess = spawn('lsof', ['-ti', `:${port}`], {
                     stdio: ['ignore', 'pipe', 'pipe']
                 });
 
-                await new Promise((resolve) => {
-                    killProcess.on('close', resolve);
+                let lsofOutput = '';
+                findProcess.stdout.on('data', (data) => {
+                    lsofOutput += data.toString();
                 });
 
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                    mainWindow.webContents.send('appium-log', {
-                        type: 'info',
-                        message: `Force killed process ${pid} using port ${port}`
+                await new Promise((resolve) => {
+                    findProcess.on('close', resolve);
+                });
+
+                const pid = lsofOutput.trim();
+                if (pid) {
+                    const killProcess = spawn('kill', ['-9', pid], {
+                        stdio: ['ignore', 'pipe', 'pipe']
                     });
+
+                    await new Promise((resolve) => {
+                        killProcess.on('close', resolve);
+                    });
+
+                    if (mainWindow && !mainWindow.isDestroyed()) {
+                        mainWindow.webContents.send('appium-log', {
+                            type: 'info',
+                            message: `Force killed process ${pid} using port ${port}`
+                        });
+                    }
+
+                    return true;
                 }
-
-                return true;
+            } catch (error) {
+                console.warn(`Error using lsof on port ${port}:`, error);
             }
-        }
+            return false;
+        } else {
+            // Windows-specific implementation
+            // Find process using the port
+            const findProcess = spawn('netstat', ['-ano'], {
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
 
-        return false;
+            let netstatOutput = '';
+            findProcess.stdout.on('data', (data) => {
+                netstatOutput += data.toString();
+            });
+
+            await new Promise((resolve) => {
+                findProcess.on('close', resolve);
+            });
+
+            // Parse netstat output to find PID using the port
+            const lines = netstatOutput.split('\n');
+            const portLine = lines.find((line) => line.includes(`:${port}`) && line.includes('LISTENING'));
+
+            if (portLine) {
+                const parts = portLine.trim().split(/\s+/);
+                const pid = parts[parts.length - 1];
+
+                if (pid && pid !== '0') {
+                    // Kill the process (Windows)
+                    const killProcess = spawn('taskkill', ['/F', '/PID', pid], {
+                        stdio: ['ignore', 'pipe', 'pipe']
+                    });
+
+                    await new Promise((resolve) => {
+                        killProcess.on('close', resolve);
+                    });
+
+                    if (mainWindow && !mainWindow.isDestroyed()) {
+                        mainWindow.webContents.send('appium-log', {
+                            type: 'info',
+                            message: `Force killed process ${pid} using port ${port}`
+                        });
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
     } catch (error) {
         console.warn(`Error force killing process on port ${port}:`, error);
         return false;
@@ -525,30 +579,46 @@ async function forceKillProcessOnPort(port) {
 // Helper function to force kill all Appium-related processes
 async function forceKillAppiumProcesses() {
     try {
-        // Kill any remaining appium processes
-        const killAppium = spawn('taskkill', ['/F', '/IM', 'node.exe', '/FI', 'WINDOWTITLE eq appium*'], {
-            stdio: ['ignore', 'pipe', 'pipe']
-        });
-
-        await new Promise((resolve) => {
-            killAppium.on('close', resolve);
-        });
-
-        // Also try killing by command line containing appium
-        const killAppiumCmd = spawn(
-            'powershell',
-            [
-                '-Command',
-                'Get-Process | Where-Object {$_.ProcessName -eq "node" -and $_.CommandLine -like "*appium*"} | Stop-Process -Force'
-            ],
-            {
+        if (process.platform === 'win32') {
+            // Windows-specific process killing
+            // Kill any remaining appium processes
+            const killAppium = spawn('taskkill', ['/F', '/IM', 'node.exe', '/FI', 'WINDOWTITLE eq appium*'], {
                 stdio: ['ignore', 'pipe', 'pipe']
-            }
-        );
+            });
 
-        await new Promise((resolve) => {
-            killAppiumCmd.on('close', resolve);
-        });
+            await new Promise((resolve) => {
+                killAppium.on('close', resolve);
+            });
+
+            // Also try killing by command line containing appium (Windows only)
+            const killAppiumCmd = spawn(
+                'powershell',
+                [
+                    '-Command',
+                    'Get-Process | Where-Object {$_.ProcessName -eq "node" -and $_.CommandLine -like "*appium*"} | Stop-Process -Force'
+                ],
+                {
+                    stdio: ['ignore', 'pipe', 'pipe']
+                }
+            );
+
+            await new Promise((resolve) => {
+                killAppiumCmd.on('close', resolve);
+            });
+        } else {
+            // Unix-like systems (macOS, Linux)
+            try {
+                const killAppium = spawn('pkill', ['-f', 'appium'], {
+                    stdio: ['ignore', 'pipe', 'pipe']
+                });
+
+                await new Promise((resolve) => {
+                    killAppium.on('close', resolve);
+                });
+            } catch (error) {
+                console.warn('Error using pkill for Appium processes:', error);
+            }
+        }
 
         // Only send message if mainWindow exists and is not destroyed
         if (mainWindow && !mainWindow.isDestroyed()) {
@@ -569,7 +639,8 @@ async function stopAppiumProcess() {
         // First, try to gracefully shutdown emulator using ADB
         if (emulatorProcess && process.env.ANDROID_HOME) {
             try {
-                const adbPath = path.join(process.env.ANDROID_HOME, 'platform-tools', 'adb.exe');
+                const adbExecutable = process.platform === 'win32' ? 'adb.exe' : 'adb';
+                const adbPath = path.join(process.env.ANDROID_HOME, 'platform-tools', adbExecutable);
 
                 // Send graceful shutdown command to emulator
                 const adbKillProcess = spawn(adbPath, ['emu', 'kill'], {
