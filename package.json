@@ -6,6 +6,7 @@
     "scripts": {
         "start": "electron .",
         "dev": "electron . --dev",
+        "debug": "electron . --inspect",
         "clean-mac": "rimraf dist",
         "build:win": "electron-builder --win portable",
         "build:mac": "npm run clean-mac && electron-builder --mac dmg --publish=never",

@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 
 async function downloadFile(url, fileName, override = false) {
-    const downloadFolder = `${process.cwd()}/downloads`;
+    const downloadFolder = process.platform === 'win32' ? `${process.cwd()}/downloads` : '/tmp/downloads';
     const fileLocalPath = `${downloadFolder}/${fileName}`;
 
     if (!override) {
