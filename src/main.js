@@ -349,9 +349,19 @@ async function startAppiumProcess(deviceAvd) {
                 stdio: ['ignore', 'pipe', 'pipe']
             });
         } else {
+            // Set PATH to include common global install locations for Appium
+            const globalPaths = [
+                '/usr/local/bin', // Homebrew/global npm
+                '/opt/homebrew/bin', // Apple Silicon Homebrew
+                process.env.PATH
+            ];
             appiumProcess = spawn('appium', ['--relaxed-security'], {
                 detached: false,
-                stdio: ['ignore', 'pipe', 'pipe']
+                stdio: ['ignore', 'pipe', 'pipe'],
+                env: {
+                    ...process.env,
+                    PATH: globalPaths.join(':')
+                }
             });
         }
 
