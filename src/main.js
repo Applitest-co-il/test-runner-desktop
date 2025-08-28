@@ -3,6 +3,94 @@ const path = require('path');
 const { spawn } = require('child_process');
 const dotenv = require('dotenv');
 
+// Function to load shell environment variables on macOS
+async function loadShellEnvironment() {
+    const setEnvironmentVars = [];
+
+    if (process.platform !== 'win32') {
+        try {
+            console.log('Loading shell environment on non win32...');
+
+            // Get environment from the user's default shell
+            const shellEnvProcess = spawn('/bin/bash', ['-l', '-c', 'env'], {
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+
+            let envOutput = '';
+            shellEnvProcess.stdout.on('data', (data) => {
+                envOutput += data.toString();
+            });
+
+            await new Promise((resolve) => {
+                shellEnvProcess.on('close', resolve);
+            });
+
+            // Parse the environment variables
+            const envLines = envOutput.split('\n');
+            for (const line of envLines) {
+                const equalIndex = line.indexOf('=');
+                if (equalIndex > 0) {
+                    const key = line.substring(0, equalIndex);
+                    const value = line.substring(equalIndex + 1);
+
+                    // Only set if not already defined or if it's important
+                    if (!process.env[key] || ['ANDROID_HOME', 'JAVA_HOME', 'PATH'].includes(key)) {
+                        const oldValue = process.env[key];
+                        process.env[key] = value;
+                        console.log(`Set environment variable: ${key}=${value}`);
+
+                        // Track what was set for UI logging
+                        setEnvironmentVars.push({
+                            key,
+                            value: value.length > 100 ? value.substring(0, 100) + '...' : value,
+                            wasOverridden: !!oldValue
+                        });
+                    }
+                }
+            }
+
+            console.log('Shell environment loaded successfully');
+        } catch (error) {
+            console.warn('Failed to load shell environment:', error);
+        }
+    }
+
+    return setEnvironmentVars;
+}
+
+// Function to log environment variables to UI
+function logEnvironmentToUI(setVars) {
+    if (mainWindow && !mainWindow.isDestroyed() && setVars.length > 0) {
+        mainWindow.webContents.send('server-log', {
+            type: 'info',
+            message: `Environment Variables Loaded from Shell (${setVars.length} variables):`
+        });
+
+        // Log important environment variables
+        const importantVars = setVars.filter((v) => ['ANDROID_HOME', 'JAVA_HOME'].includes(v.key));
+        importantVars.forEach((envVar) => {
+            mainWindow.webContents.send('server-log', {
+                type: 'info',
+                message: `  ${envVar.key}=${envVar.value}${envVar.wasOverridden ? ' (overridden)' : ''}`
+            });
+        });
+
+        if (setVars.length > importantVars.length) {
+            mainWindow.webContents.send('server-log', {
+                type: 'info',
+                message: `  ... and ${setVars.length - importantVars.length} other environment variables`
+            });
+        }
+    }
+}
+
+// Load shell environment before doing anything else
+let environmentVars = [];
+loadShellEnvironment().then((setVars) => {
+    environmentVars = setVars;
+    console.log('Environment setup complete, proceeding with app initialization...');
+});
+
 // Load .env file from the correct location based on whether we're in development or packaged
 const envPath = app.isPackaged ? path.join(process.resourcesPath, '.env') : path.join(__dirname, '..', '.env');
 
@@ -141,6 +229,14 @@ function createWindow() {
     });
 
     mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+    // Log environment variables to UI once content is loaded
+    mainWindow.webContents.once('did-finish-load', () => {
+        // Small delay to ensure UI is ready
+        setTimeout(() => {
+            logEnvironmentToUI(environmentVars);
+        }, 500);
+    });
 
     // Open DevTools in development
     if (process.argv.includes('--dev')) {
@@ -321,13 +417,13 @@ ipcMain.handle('start-server', async () => {
 // Appium process management functions
 async function startAppiumProcess(deviceAvd) {
     try {
-        // // Check if ANDROID_HOME is set
-        // if (!process.env.ANDROID_HOME) {
-        //     return {
-        //         success: false,
-        //         message: 'ANDROID_HOME environment variable is not set. Please set it to your Android SDK path.'
-        //     };
-        // }
+        // Check if ANDROID_HOME is set
+        if (!process.env.ANDROID_HOME) {
+            return {
+                success: false,
+                message: 'ANDROID_HOME environment variable is not set. Please set it to your Android SDK path.'
+            };
+        }
 
         // Check if port 4723 is already in use and kill any processes using it
         const portFreed = await forceKillProcessOnPort(4723);
@@ -401,7 +497,15 @@ async function startAppiumProcess(deviceAvd) {
                 });
             }
         });
+    } catch (error) {
+        console.error('Failed to start Appium:', error);
+        return {
+            success: false,
+            message: `Failed to start Appium: ${error.message}`
+        };
+    }
 
+    try {
         // Start Android Emulator
         const emulatorExecutable = process.platform === 'win32' ? 'emulator.exe' : 'emulator';
         const emulatorPath = path.join(process.env.ANDROID_HOME, 'emulator', emulatorExecutable);
@@ -464,10 +568,10 @@ async function startAppiumProcess(deviceAvd) {
             message: `Appium server and Android emulator (${deviceAvd}) started successfully`
         };
     } catch (error) {
-        console.error('Failed to start Appium:', error);
+        console.error('Failed to start Emulator:', error);
         return {
             success: false,
-            message: `Failed to start Appium: ${error.message}`
+            message: `Failed to start Emulator: ${error.message}`
         };
     }
 }
