@@ -11,9 +11,26 @@ async function loadShellEnvironment() {
         try {
             console.log('Loading shell environment on non win32...');
 
-            // Get environment from the user's default shell
-            const shellEnvProcess = spawn('/bin/bash', ['-l', '-c', 'env'], {
-                stdio: ['ignore', 'pipe', 'pipe']
+            // Get the user's default shell
+            const userShell = process.env.SHELL || '/bin/bash';
+            console.log('Using shell:', userShell);
+
+            // Create a command that sources common profile files and then runs env
+            const sourceCmd = [
+                'source ~/.bashrc 2>/dev/null || true',
+                'source ~/.bash_profile 2>/dev/null || true',
+                'source ~/.zshrc 2>/dev/null || true',
+                'source ~/.profile 2>/dev/null || true',
+                'env'
+            ].join('; ');
+
+            // Get environment from the user's shell with profile sourcing
+            const shellEnvProcess = spawn(userShell, ['-c', sourceCmd], {
+                stdio: ['ignore', 'pipe', 'pipe'],
+                env: {
+                    ...process.env,
+                    HOME: require('os').homedir()
+                }
             });
 
             let envOutput = '';
@@ -21,8 +38,18 @@ async function loadShellEnvironment() {
                 envOutput += data.toString();
             });
 
+            let errorOutput = '';
+            shellEnvProcess.stderr.on('data', (data) => {
+                errorOutput += data.toString();
+            });
+
             await new Promise((resolve) => {
-                shellEnvProcess.on('close', resolve);
+                shellEnvProcess.on('close', (code) => {
+                    if (code !== 0 && errorOutput) {
+                        console.warn('Shell environment process stderr:', errorOutput);
+                    }
+                    resolve();
+                });
             });
 
             // Parse the environment variables
