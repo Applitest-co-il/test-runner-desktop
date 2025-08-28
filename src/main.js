@@ -321,13 +321,13 @@ ipcMain.handle('start-server', async () => {
 // Appium process management functions
 async function startAppiumProcess(deviceAvd) {
     try {
-        // Check if ANDROID_HOME is set
-        if (!process.env.ANDROID_HOME) {
-            return {
-                success: false,
-                message: 'ANDROID_HOME environment variable is not set. Please set it to your Android SDK path.'
-            };
-        }
+        // // Check if ANDROID_HOME is set
+        // if (!process.env.ANDROID_HOME) {
+        //     return {
+        //         success: false,
+        //         message: 'ANDROID_HOME environment variable is not set. Please set it to your Android SDK path.'
+        //     };
+        // }
 
         // Check if port 4723 is already in use and kill any processes using it
         const portFreed = await forceKillProcessOnPort(4723);
