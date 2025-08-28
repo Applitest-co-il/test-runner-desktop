@@ -49,10 +49,26 @@ async function loadShellEnvironment() {
                 }
             }
 
+            if (setEnvironmentVars.length == 0) {
+                console.log('No environment variables were set');
+            }
+
             console.log('Shell environment loaded successfully');
         } catch (error) {
             console.warn('Failed to load shell environment:', error);
         }
+    } else {
+        // Load default environment variables
+        setEnvironmentVars.push({
+            key: 'ANDROID_HOME',
+            value: process.env.ANDROID_HOME || '/path/to/android/sdk',
+            wasOverridden: false
+        });
+        setEnvironmentVars.push({
+            key: 'JAVA_HOME',
+            value: process.env.JAVA_HOME || '/path/to/java/home',
+            wasOverridden: false
+        });
     }
 
     return setEnvironmentVars;
@@ -60,25 +76,25 @@ async function loadShellEnvironment() {
 
 // Function to log environment variables to UI
 function logEnvironmentToUI(setVars) {
-    if (mainWindow && !mainWindow.isDestroyed() && setVars.length > 0) {
-        mainWindow.webContents.send('server-log', {
-            type: 'info',
-            message: `Environment Variables Loaded from Shell (${setVars.length} variables):`
-        });
-
-        // Log important environment variables
-        const importantVars = setVars.filter((v) => ['ANDROID_HOME', 'JAVA_HOME'].includes(v.key));
-        importantVars.forEach((envVar) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        if (setVars.length > 0) {
             mainWindow.webContents.send('server-log', {
                 type: 'info',
-                message: `  ${envVar.key}=${envVar.value}${envVar.wasOverridden ? ' (overridden)' : ''}`
+                message: `Environment Variables Loaded from Shell (${setVars.length} variables):`
             });
-        });
 
-        if (setVars.length > importantVars.length) {
+            // Log all environment variables that were set
+            for (let i = 0; i < setVars.length; i++) {
+                const envVar = setVars[i];
+                mainWindow.webContents.send('server-log', {
+                    type: 'info',
+                    message: `  ${envVar.key}=${envVar.value}${envVar.wasOverridden ? ' (overridden)' : ''}`
+                });
+            }
+        } else {
             mainWindow.webContents.send('server-log', {
                 type: 'info',
-                message: `  ... and ${setVars.length - importantVars.length} other environment variables`
+                message: 'No environment variables were set from shell'
             });
         }
     }
@@ -235,7 +251,7 @@ function createWindow() {
         // Small delay to ensure UI is ready
         setTimeout(() => {
             logEnvironmentToUI(environmentVars);
-        }, 500);
+        }, 1000);
     });
 
     // Open DevTools in development
