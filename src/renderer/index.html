@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>ApplitestLocalRunner</title>
         <link rel="stylesheet" href="styles.css" />
+        <!-- JSON Editor CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsoneditor@10.0.3/dist/jsoneditor.min.css" />
     </head>
     <body>
         <div class="container">
@@ -73,6 +75,47 @@
                             <span id="emulator-status-text">Stopped</span>
                         </div>
                     </div>
+
+                    <div class="section-divider"></div>
+
+                    <div class="config-file-section">
+                        <h3>Use Local Configuration File</h3>
+                        <div class="file-selector">
+                            <input
+                                type="file"
+                                id="config-file-input"
+                                accept=".json,.yaml,.yml,.js"
+                                style="display: none"
+                            />
+                            <button id="select-config-btn" class="btn btn-secondary">
+                                <span class="btn-icon">📁</span>
+                                Select File
+                            </button>
+                        </div>
+
+                        <div id="selected-file-info" class="selected-file-info" style="display: none">
+                            <div class="file-info">
+                                <div class="file-name-container">
+                                    <span class="file-icon">📄</span>
+                                    <span id="selected-file-name" class="file-name"></span>
+                                </div>
+                                <div class="file-path">
+                                    <small id="selected-file-path" class="file-path-text"></small>
+                                </div>
+                            </div>
+
+                            <div class="config-actions">
+                                <button id="send-config-btn" class="btn btn-primary" disabled>
+                                    <span class="btn-icon">🚀</span>
+                                    Send to Local Runner
+                                </button>
+                                <button id="view-config-btn" class="btn btn-secondary">
+                                    <span class="btn-icon">👁</span>
+                                    View Configuration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="log-panel">
@@ -81,6 +124,8 @@
                             <button class="log-tab active" data-tab="local-runner">Local Runner</button>
                             <button class="log-tab" data-tab="appium" style="display: none">Appium</button>
                             <button class="log-tab" data-tab="adb" style="display: none">ADB</button>
+                            <button class="log-tab" data-tab="config" style="display: none">Configuration</button>
+                            <button class="log-tab" data-tab="results" style="display: none">Last Run Results</button>
                         </div>
                         <button id="clear-logs-btn" class="btn btn-small">Clear Active Logs</button>
                     </div>
@@ -97,11 +142,27 @@
                         <div id="adb-logs" class="log-container">
                             <!-- ADB logs will appear here -->
                         </div>
+                        <div id="config-logs" class="log-container">
+                            <div id="config-viewer" class="config-viewer">
+                                <div class="config-placeholder">
+                                    <span class="placeholder-icon">📋</span>
+                                    <p>Select a configuration file to view its contents</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="results-logs" class="log-container">
+                            <div class="results-placeholder">
+                                <span class="placeholder-icon">📊</span>
+                                <p>No test results available yet. Run a test configuration to see results.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
         </div>
 
+        <!-- JSON Editor JS -->
+        <script src="https://cdn.jsdelivr.net/npm/jsoneditor@10.0.3/dist/jsoneditor.min.js"></script>
         <script src="renderer.js"></script>
     </body>
 </html>

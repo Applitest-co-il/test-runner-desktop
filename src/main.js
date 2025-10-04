@@ -949,3 +949,122 @@ ipcMain.handle('get-appium-status', async () => {
         emulatorRunning: emulatorProcess !== null
     };
 });
+
+// Configuration IPC handlers
+ipcMain.handle('send-config-to-runner', async (event, configData) => {
+    try {
+        // Validate that server is running
+        if (!serverProcess) {
+            return {
+                success: false,
+                message: 'Local runner is not running. Please start the server first.'
+            };
+        }
+
+        // Log the configuration sending attempt
+        console.log('Sending configuration to local runner:', configData.fileName);
+
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('server-log', {
+                type: 'info',
+                message: `Processing configuration file: ${configData.fileName}`
+            });
+
+            try {
+                // Send configuration to local runner via HTTP PATCH request
+                const url = `http://localhost:${PORT}/test-runner`;
+
+                mainWindow.webContents.send('server-log', {
+                    type: 'info',
+                    message: `Sending test configuration to local runner (this may take several hours)...`
+                });
+
+                // Set a very long timeout for potentially hours-long processing
+                const controller = new AbortController();
+                const timeoutId = setTimeout(
+                    () => {
+                        controller.abort();
+                    },
+                    6 * 60 * 60 * 1000
+                ); // 6 hours timeout
+
+                const response = await fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(configData.content ? JSON.parse(configData.content) : {}),
+                    signal: controller.signal
+                });
+
+                // Clear the timeout since request completed
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    mainWindow.webContents.send('server-log', {
+                        type: 'info',
+                        message: `Test Configuration applied successfully to local runner`
+                    });
+
+                    if (result) {
+                        mainWindow.webContents.send('server-log', {
+                            type: 'info',
+                            message: `Server response: ${result}`
+                        });
+                    }
+
+                    // If the result contains test automation results, display them
+                    if (result && result.suiteResults) {
+                        result.name = configData.fileName || 'Last Run Results';
+                        mainWindow.webContents.send('test-results', result);
+                        mainWindow.webContents.send('server-log', {
+                            type: 'info',
+                            message: `Test results received and displayed in Last Run Results tab`
+                        });
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (httpError) {
+                console.error('HTTP request failed:', httpError);
+
+                let errorMessage = `Failed to send configuration to local runner: ${httpError.message}`;
+
+                // Handle specific timeout case
+                if (httpError.name === 'AbortError') {
+                    errorMessage =
+                        'Configuration request timed out after 6 hours. The process may still be running on the server.';
+                    mainWindow.webContents.send('server-log', {
+                        type: 'warning',
+                        message: 'Request timed out - check server logs for ongoing processing status'
+                    });
+                }
+
+                mainWindow.webContents.send('server-log', {
+                    type: 'error',
+                    message: errorMessage
+                });
+
+                return {
+                    success: false,
+                    message: `Failed to communicate with local runner: ${httpError.message}`
+                };
+            }
+        }
+
+        // Here you could add actual integration with your test runner API
+        // For example, posting to http://localhost:${PORT}/config or similar
+
+        return {
+            success: true,
+            message: `Configuration "${configData.fileName}" sent to local runner successfully`
+        };
+    } catch (error) {
+        console.error('Error sending config to runner:', error);
+        return {
+            success: false,
+            message: `Failed to send configuration: ${error.message}`
+        };
+    }
+});

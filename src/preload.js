@@ -12,12 +12,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     stopAppium: () => ipcRenderer.invoke('stop-appium'),
     getAppiumStatus: () => ipcRenderer.invoke('get-appium-status'),
 
+    // Configuration APIs
+    sendConfigToRunner: (configData) => ipcRenderer.invoke('send-config-to-runner', configData),
+
     // Event listeners
     onServerLog: (callback) => {
         ipcRenderer.on('server-log', (event, data) => callback(data));
     },
     onServerStatus: (callback) => {
         ipcRenderer.on('server-status', (event, data) => callback(data));
+    },
+    onTestResults: (callback) => {
+        ipcRenderer.on('test-results', (event, data) => callback(data));
     },
     onAppiumStatus: (callback) => {
         ipcRenderer.on('appium-status', (event, data) => callback(data));
