@@ -74,6 +74,11 @@ jobs:
             - name: Build for production
               run: npm run build:win
 
+            - name: Sign with Sigstore
+              uses: sigstore/gh-action-sigstore-python@v1
+              with:
+                  inputs: ./dist/ApplitestLocalRunner.exe
+
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
