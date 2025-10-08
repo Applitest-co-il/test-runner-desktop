@@ -142,12 +142,31 @@ jobs:
               run: npm install
 
             - name: Setup ad-hoc code signing
-              run: npm run create-mac-cert
+              run: |
+                  echo "Setting up ad-hoc signing..."
+                  npm run create-mac-cert
+
+                  echo "Verifying certificate creation..."
+                  security find-identity -v -p codesigning
+
+                  echo "Listing keychains..."
+                  security list-keychains -d user
 
             - name: Build for production
               env:
                   USE_HARD_LINKS: false
               run: npm run build:mac
+
+            - name: Verify signing after build
+              run: |
+                  echo "Checking if app was signed..."
+                  if [ -d "dist/mac/ApplitestLocalRunner.app" ]; then
+                      echo "Found app, checking signature..."
+                      codesign -dv --verbose=4 "dist/mac/ApplitestLocalRunner.app"
+                  else
+                      echo "App not found in expected location, listing dist contents..."
+                      find dist -name "*.app" -type d || echo "No .app bundles found"
+                  fi
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4

@@ -128,6 +128,7 @@
             "entitlements": "build/entitlements.mac.plist",
             "entitlementsInherit": "build/entitlements.mac.plist",
             "identity": "Applitest Developer",
+            "forceCodeSigning": true,
             "type": "distribution",
             "extendInfo": {
                 "LSUIElement": false,

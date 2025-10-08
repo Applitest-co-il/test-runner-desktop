@@ -17,10 +17,11 @@ mkdir -p build
 # Create a self-signed certificate for code signing
 echo "Creating self-signed certificate..."
 
-# Generate certificate
-security create-certificate-template > cert-template.xml
+# Create temporary keychain
+KEYCHAIN_PATH="$HOME/Library/Keychains/applitest-codesign.keychain-db"
+KEYCHAIN_PASSWORD="temp123"
 
-cat > cert-template.xml << 'EOF'
+cat > cert-template.xml << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -42,14 +43,10 @@ cat > cert-template.xml << 'EOF'
     <key>C</key>
     <string>US</string>
     <key>keychain</key>
-    <string>/tmp/codesign.keychain</string>
+    <string>$KEYCHAIN_PATH</string>
 </dict>
 </plist>
 EOF
-
-# Create temporary keychain
-KEYCHAIN_PATH="$HOME/Library/Keychains/applitest-codesign.keychain-db"
-KEYCHAIN_PASSWORD="temp123"
 
 echo "Creating keychain..."
 security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
@@ -61,6 +58,19 @@ security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d
 
 echo "Generating certificate..."
 security create-certificate -c cert-template.xml -k "$KEYCHAIN_PATH"
+
+# Verify certificate was created
+echo "Verifying certificate creation..."
+security find-identity -v -p codesigning -s "Applitest Developer"
+
+if security find-identity -v -p codesigning -s "Applitest Developer" | grep -q "Applitest Developer"; then
+    echo "✅ Certificate 'Applitest Developer' created successfully"
+else
+    echo "❌ Failed to create certificate 'Applitest Developer'"
+    echo "Available certificates:"
+    security find-identity -v -p codesigning
+    exit 1
+fi
 
 # Export certificate for backup (optional)
 echo "Exporting certificate..."
