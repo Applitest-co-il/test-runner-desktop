@@ -89,17 +89,49 @@ The project includes a single, comprehensive certificate creation script:
 ### Limitations
 
 - ⚠️ Users will see "Unknown Publisher" warnings
+- ⚠️ SmartScreen warnings cannot be eliminated with self-signed certificates
 - ⚠️ Not trusted by default on other machines
 - ⚠️ Requires manual trust installation for full trust
 - ⚠️ Certificate must be renewed annually
+- ⚠️ Browser may warn about "uncommon downloads"
+
+## Eliminating Warnings (Paid Solutions)
+
+To completely eliminate SmartScreen and publisher warnings, you need a **commercial code signing certificate**:
+
+### Standard Code Signing Certificate ($200-400/year)
+
+- Eliminates "Unknown Publisher" warnings
+- Still may trigger SmartScreen for new applications
+- Available from: Sectigo, DigiCert, GlobalSign, SSL.com
+
+### Extended Validation (EV) Code Signing Certificate ($400-800/year)
+
+- **Best option**: Eliminates most SmartScreen warnings immediately
+- Requires hardware token (USB device)
+- Stronger identity verification process
+- Microsoft recognizes EV certificates for immediate trust
+
+### Certificate Providers
+
+- **Sectigo** (formerly Comodo): ~$200-400/year
+- **DigiCert**: ~$400-600/year
+- **SSL.com**: ~$250-500/year
+- **GlobalSign**: ~$300-500/year
+
+**Note**: Prices vary, shop around for current rates.
 
 ## User Experience
 
 When users download and run the signed application:
 
-1. **First Run**: Windows may show "Windows protected your PC" warning
-2. **User Action**: Click "More info" → "Run anyway"
-3. **After Trust**: If certificate is installed to trusted store, no warnings appear
+1. **Download**: Browser may show "This file is not commonly downloaded" warning
+2. **SmartScreen**: Windows will show "Publisher: Unknown" warning even with valid signature
+3. **First Run**: Windows may show "Windows protected your PC" warning
+4. **User Action**: Users need to click "More info" → "Run anyway"
+5. **After Trust**: If certificate is installed to trusted store, executable warnings reduce
+
+**Important**: Self-signed certificates will always show "Publisher: Unknown" and trigger SmartScreen warnings. This is expected behavior and cannot be eliminated without a commercial certificate.
 
 ## Manual Certificate Installation (For Users)
 

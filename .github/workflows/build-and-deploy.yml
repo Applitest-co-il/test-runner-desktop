@@ -117,50 +117,50 @@ jobs:
                   aws s3 sync ./dist/sync s3://${{ vars.AWS_S3 }}/downloads
                   aws cloudfront create-invalidation --distribution-id=${{ vars.AWS_CLOUDFRONT }}  --paths "/downloads/*"
 
-    # publish-macos13-release:
-    #     needs: [validate]
-    #     runs-on: macos-13
+    publish-macos13-release:
+        needs: [validate]
+        runs-on: macos-13
 
-    #     strategy:
-    #         matrix:
-    #             node-version: [20.x]
-    #             # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        strategy:
+            matrix:
+                node-version: [20.x]
+                # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
-    #     steps:
-    #         - uses: actions/checkout@v4
-    #           with:
-    #               fetch-depth: 0
-    #               ref: ${{ inputs.ref }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: ${{ inputs.ref }}
 
-    #         - name: Use Node.js ${{ matrix.node-version }}
-    #           uses: actions/setup-node@v4
-    #           with:
-    #               node-version: ${{ matrix.node-version }}
-    #               cache: 'npm'
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: 'npm'
 
-    #         - name: Install
-    #           run: npm install
+            - name: Install
+              run: npm install
 
-    #         - name: Build for production
-    #           env:
-    #               USE_HARD_LINKS: false
-    #           run: npm run build:mac
+            - name: Build for production
+              env:
+                  USE_HARD_LINKS: false
+              run: npm run build:mac
 
-    #         - name: Configure AWS Credentials
-    #           uses: aws-actions/configure-aws-credentials@v4
-    #           with:
-    #               aws-access-key-id: ${{ secrets.AWS_ACCESS }}
-    #               aws-secret-access-key: ${{ secrets.AWS_SECRET }}
-    #               aws-region: eu-west-1
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+                  aws-region: eu-west-1
 
-    #         - name: Deploy to S3
-    #           run: |
-    #               echo "Copy to sync folder"
-    #               mkdir -p ./dist/sync
-    #               cp ./dist/ApplitestLocalRunner-mac.dmg ./dist/sync/ApplitestLocalRunner-macos13.dmg
-    #               echo "Syncing to S3"
-    #               aws s3 sync ./dist/sync s3://${{ vars.AWS_S3 }}/downloads
-    #               aws cloudfront create-invalidation --distribution-id=${{ vars.AWS_CLOUDFRONT }}  --paths "/downloads/*"
+            - name: Deploy to S3
+              run: |
+                  echo "Copy to sync folder"
+                  mkdir -p ./dist/sync
+                  cp ./dist/ApplitestLocalRunner-mac.dmg ./dist/sync/ApplitestLocalRunner-macos13.dmg
+                  echo "Syncing to S3"
+                  aws s3 sync ./dist/sync s3://${{ vars.AWS_S3 }}/downloads
+                  aws cloudfront create-invalidation --distribution-id=${{ vars.AWS_CLOUDFRONT }}  --paths "/downloads/*"
 
     # publish-macoslatest-release:
     #     needs: [validate, publish-macos13-release]
