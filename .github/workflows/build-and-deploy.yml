@@ -141,6 +141,49 @@ jobs:
             - name: Install
               run: npm install
 
+            - name: Setup ad-hoc code signing
+              run: |
+                  # Create ad-hoc signing certificate for CI
+                  echo "Setting up ad-hoc signing..."
+
+                  # Create temporary keychain
+                  KEYCHAIN_PATH="$HOME/Library/Keychains/temp-codesign.keychain-db"
+                  KEYCHAIN_PASSWORD="temp123"
+
+                  security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+                  security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+                  security set-keychain-settings -t 3600 -l "$KEYCHAIN_PATH"
+                  security list-keychains -d user -s "$KEYCHAIN_PATH" "$(security list-keychains -d user | sed s/\"//g)"
+
+                  # Create and install certificate
+                  cat > cert-template.plist << 'EOF'
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                  <plist version="1.0">
+                  <dict>
+                      <key>keyUsage</key>
+                      <integer>5</integer>
+                      <key>subject</key>
+                      <string>CN=Applitest Developer,OU=Applitest,O=Applitest,C=US</string>
+                      <key>keySize</key>
+                      <integer>2048</integer>
+                      <key>publicKeyIsPermanent</key>
+                      <false/>
+                      <key>certType</key>
+                      <integer>1</integer>
+                      <key>serialNumber</key>
+                      <string>1</string>
+                      <key>keychain</key>
+                      <string>$KEYCHAIN_PATH</string>
+                  </dict>
+                  </plist>
+                  EOF
+
+                  security create-certificate -c cert-template.plist -k "$KEYCHAIN_PATH"
+                  rm cert-template.plist
+
+                  echo "Ad-hoc signing certificate created"
+
             - name: Build for production
               env:
                   USE_HARD_LINKS: false

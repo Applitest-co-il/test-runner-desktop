@@ -12,6 +12,8 @@ This project is configured to use self-signed certificates for Windows code sign
 
 ### For Local Development
 
+#### Windows
+
 1. **Generate a self-signed certificate (requires Administrator privileges):**
 
     ```bash
@@ -34,6 +36,22 @@ This project is configured to use self-signed certificates for Windows code sign
 
     ```bash
     npm run build:win
+    ```
+
+#### macOS
+
+1. **Generate an ad-hoc signing certificate:**
+
+    ```bash
+    npm run create-mac-cert
+    ```
+
+    **Note:** This creates an ad-hoc certificate that provides basic signing without Apple Developer Program membership.
+
+2. Build and sign the application:
+
+    ```bash
+    npm run build:mac
     ```
 
 ### For GitHub Actions

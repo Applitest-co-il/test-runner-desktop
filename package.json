@@ -16,6 +16,7 @@
         "postinstall": "electron-builder install-app-deps",
         "create-enhanced-cert": "powershell -ExecutionPolicy Bypass -File scripts/create-enhanced-cert.ps1",
         "create-github-cert": "powershell -ExecutionPolicy Bypass -File scripts/create-github-cert.ps1",
+        "create-mac-cert": "bash scripts/create-mac-adhoc-sign.sh",
         "format:check": "prettier --check .",
         "format:write": "prettier --write .",
         "lint:check": "eslint .",
@@ -126,6 +127,10 @@
             "gatekeeperAssess": false,
             "entitlements": "build/entitlements.mac.plist",
             "entitlementsInherit": "build/entitlements.mac.plist",
+            "identity": "Applitest Developer",
+            "certificateFile": "build/applitest-mac-cert.p12",
+            "certificatePassword": "",
+            "type": "distribution",
             "extendInfo": {
                 "LSUIElement": false,
                 "CFBundleDocumentTypes": [
