@@ -102,7 +102,9 @@
             "signAndEditExecutable": true,
             "verifyUpdateCodeSignature": false,
             "signtoolOptions": {
-                "signingHashAlgorithms": ["sha256"],
+                "signingHashAlgorithms": [
+                    "sha256"
+                ],
                 "certificateFile": "build/applitest-cert.p12",
                 "certificatePassword": "",
                 "timeStampServer": "http://timestamp.digicert.com"
