@@ -53,24 +53,40 @@ openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out c
 openssl pkcs12 -export -out "build/applitest-mac-cert.p12" -inkey cert.key -in cert.crt -passout pass:
 
 # Import the certificate into the keychain
-security import "build/applitest-mac-cert.p12" -k "$KEYCHAIN_PATH" -P "" -T /usr/bin/codesign -T /usr/bin/security
+echo "Importing certificate into keychain..."
+security import "build/applitest-mac-cert.p12" -k "$KEYCHAIN_PATH" -P "" -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild
+
+# Check if import was successful
+if [ $? -ne 0 ]; then
+    echo "Failed to import certificate, trying alternative method..."
+    
+    # Alternative method: import cert and key separately
+    security import cert.crt -k "$KEYCHAIN_PATH" -T /usr/bin/codesign -T /usr/bin/security
+    security import cert.key -k "$KEYCHAIN_PATH" -T /usr/bin/codesign -T /usr/bin/security
+fi
 
 # Set the certificate to be trusted for code signing
 security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" 2>/dev/null || true
+
+# Also try to set trust settings for the certificate
+security add-trusted-cert -d -r trustRoot -k "$KEYCHAIN_PATH" cert.crt 2>/dev/null || true
 
 # Clean up temporary files
 rm cert.key cert.crt cert.conf
 
 # Verify certificate was created
 echo "Verifying certificate creation..."
-security find-identity -v -p codesigning -s "Applitest Developer"
+CERT_COUNT=$(security find-identity -v -p codesigning -s "Applitest Developer" | grep -c "Applitest Developer" || echo "0")
 
-if security find-identity -v -p codesigning -s "Applitest Developer" | grep -q "Applitest Developer"; then
+if [ "$CERT_COUNT" -gt 0 ]; then
     echo "✅ Certificate 'Applitest Developer' created successfully"
+    security find-identity -v -p codesigning -s "Applitest Developer"
 else
     echo "❌ Failed to create certificate 'Applitest Developer'"
     echo "Available certificates:"
     security find-identity -v -p codesigning
+    echo "Checking all certificates in keychain:"
+    security find-identity -v -p codesigning "$KEYCHAIN_PATH"
     exit 1
 fi
 

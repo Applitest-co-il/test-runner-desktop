@@ -2,7 +2,7 @@
 
 ## Expected Security Warning
 
-When downloading and running ApplitestLocalRunner on macOS, you may see these warnings:
+When downloading and running ApplitestLocalRunner on macOS, you will see these warnings:
 
 ```text
 "ApplitestLocalRunner.dmg" can't be opened because it was not downloaded from the Mac App Store.
@@ -14,7 +14,7 @@ Or after mounting the DMG:
 "ApplitestLocalRunner" can't be opened because it's from an unidentified developer.
 ```
 
-**This is normal and expected.** The application is properly signed but uses an ad-hoc signature, not an Apple Developer certificate.
+**This is normal and expected.** The application is unsigned to avoid complex CI signing issues, but can be signed locally for development.
 
 ## How to Install and Run on macOS
 
