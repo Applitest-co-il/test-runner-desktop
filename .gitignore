@@ -7,6 +7,9 @@ yarn-error.log*
 # Build outputs
 dist/
 build/icon.ico
+build/*.p12
+build/*.pfx
+build/certificate-base64.txt
 
 # Environment
 .env.local

@@ -17,7 +17,12 @@
         "format:check": "prettier --check .",
         "format:write": "prettier --write .",
         "lint:check": "eslint .",
-        "lint:fix": "eslint --fix ."
+        "lint:fix": "eslint --fix .",
+        "create-cert": "powershell -ExecutionPolicy Bypass -File scripts/create-self-signed-cert.ps1",
+        "create-simple-cert": "powershell -ExecutionPolicy Bypass -File scripts/create-simple-cert.ps1",
+        "create-enhanced-cert": "powershell -ExecutionPolicy Bypass -File scripts/create-enhanced-cert.ps1",
+        "create-github-cert": "powershell -ExecutionPolicy Bypass -File scripts/create-github-cert.ps1",
+        "build:win:signed": "npm run create-simple-cert && electron-builder --win portable"
     },
     "keywords": [
         "electron",
@@ -97,8 +102,15 @@
             "icon": "build/icon-256.png",
             "publisherName": "Applitest",
             "requestedExecutionLevel": "asInvoker",
-            "signAndEditExecutable": false,
-            "verifyUpdateCodeSignature": false
+            "signAndEditExecutable": true,
+            "verifyUpdateCodeSignature": false,
+            "signingHashAlgorithms": [
+                "sha256"
+            ],
+            "certificateFile": "build/applitest-cert.p12",
+            "certificatePassword": "",
+            "certificateSubjectName": "Applitest",
+            "timeStampServer": "http://timestamp.digicert.com"
         },
         "mac": {
             "target": [

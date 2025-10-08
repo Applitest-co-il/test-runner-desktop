@@ -51,6 +51,9 @@ jobs:
         needs: [validate]
         runs-on: windows-latest
 
+        env:
+            WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+
         strategy:
             matrix:
                 node-version: [20.x]
@@ -71,13 +74,32 @@ jobs:
             - name: Install
               run: npm install
 
-            - name: Build for production
-              run: npm run build:win
+            - name: Setup code signing certificate
+              run: |
+                  # Create build directory
+                  New-Item -ItemType Directory -Force -Path "build"
 
-            - name: Sign with Sigstore
-              uses: sigstore/gh-action-sigstore-python@v2.1.1
-              with:
-                  inputs: ./dist/ApplitestLocalRunner.exe
+                  # Decode certificate from secret and save to file
+                  $certBytes = [System.Convert]::FromBase64String("$env:WINDOWS_CERTIFICATE")
+                  [System.IO.File]::WriteAllBytes("$PWD\build\applitest-cert.p12", $certBytes)
+
+                  Write-Host "Certificate file created successfully"
+              shell: pwsh
+              if: env.WINDOWS_CERTIFICATE != ''
+
+            - name: Build for production (with signing)
+              run: npm run build:win
+              if: env.WINDOWS_CERTIFICATE != ''
+
+            - name: Build for production (without signing)
+              run: |
+                  # Temporarily disable signing for build without certificate
+                  $packageJson = Get-Content "package.json" | ConvertFrom-Json
+                  $packageJson.build.win.signAndEditExecutable = $false
+                  $packageJson | ConvertTo-Json -Depth 100 | Set-Content "package.json"
+                  npm run build:win
+              shell: pwsh
+              if: env.WINDOWS_CERTIFICATE == ''
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
