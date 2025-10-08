@@ -128,8 +128,6 @@
             "entitlements": "build/entitlements.mac.plist",
             "entitlementsInherit": "build/entitlements.mac.plist",
             "identity": "Applitest Developer",
-            "certificateFile": "build/applitest-mac-cert.p12",
-            "certificatePassword": "",
             "type": "distribution",
             "extendInfo": {
                 "LSUIElement": false,
