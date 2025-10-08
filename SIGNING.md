@@ -156,7 +156,8 @@ To upgrade to a commercial certificate later:
 - Verify certificate exists at `build/applitest-cert.p12`
 - Check that `signAndEditExecutable` is set to `true` in package.json
 - Ensure certificate contains private key (scripts verify this)
-- Match `certificateSubjectName` in package.json with certificate subject
+- Verify `signtoolOptions.certificateFile` path in package.json is correct
+- Check that certificate file is accessible in the build environment
 
 ### Users Still See Warnings
 
