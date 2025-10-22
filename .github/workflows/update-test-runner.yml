@@ -7,6 +7,8 @@ on:
 jobs:
     update-test-runner:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
         outputs:
             newrev: ${{ steps.commit.outputs.newrev }}
 

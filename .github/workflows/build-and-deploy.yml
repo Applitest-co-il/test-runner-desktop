@@ -20,6 +20,8 @@ on:
 jobs:
     validate:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         strategy:
             matrix:
@@ -50,6 +52,8 @@ jobs:
     publish-win-release:
         needs: [validate]
         runs-on: windows-latest
+        permissions:
+            contents: read
 
         env:
             WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
@@ -120,6 +124,8 @@ jobs:
     publish-macos13-release:
         needs: [validate]
         runs-on: macos-13
+        permissions:
+            contents: read
 
         strategy:
             matrix:
