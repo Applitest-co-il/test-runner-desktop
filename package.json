@@ -31,16 +31,16 @@
     "author": "Daniel Yaghil",
     "license": "Proprietary",
     "devDependencies": {
-        "electron": "^37.2.6",
+        "electron": "^37.7.1",
         "electron-builder": "^25.1.8",
         "eslint": "^9.18.0",
         "eslint-config-prettier": "^10.0.1",
         "prettier": "^3.4.2"
     },
     "dependencies": {
-        "@applitest/test-runner": "^0.9.89",
+        "@applitest/test-runner": "^0.9.90",
         "archiver-utils": "^5.0.2",
-        "axios": "^1.4.0",
+        "axios": "^1.12.2",
         "cors": "^2.8.5",
         "dotenv": "^16.0.0",
         "express": "5.0.1",
