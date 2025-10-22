@@ -1,9 +1,51 @@
 const axios = require('axios');
 const fs = require('fs');
 
+const { URL } = require('url'); // For secure URL parsing/validation
+
+// Define an allow-list of trusted hostnames/endpoints (adjust as appropriate)
+// if host start and ends with / it's treated as regex pattern, if not as exact match
+// eslint-disable-next-line no-useless-escape
+const ALLOWED_HOSTS = ['s3.amazonaws.com', '/.*\\.s3\\..*\\.amazonaws\\.com$/'];
+
+function isAllowedUrl(urlString) {
+    try {
+        const parsedUrl = new URL(urlString, 'https://dummy-base.com'); // fallback base for relative
+        // Enforce HTTPS
+        if (parsedUrl.protocol !== 'https:') return false;
+        // Check host allow-list
+        let isAllowedHost = false;
+        for (const host of ALLOWED_HOSTS) {
+            if (host.startsWith('/') && host.endsWith('/')) {
+                // Regular expression pattern
+                const pattern = host.slice(1, -1); // Remove leading and trailing slashes
+                const regex = new RegExp(pattern);
+                if (regex.test(parsedUrl.hostname)) {
+                    isAllowedHost = true;
+                    break;
+                }
+            } else {
+                // Exact string match
+                if (parsedUrl.hostname === host) {
+                    isAllowedHost = true;
+                    break;
+                }
+            }
+        }
+        if (!isAllowedHost) return false;
+        // Optionally block suspicious characters (path traversal, etc)
+        if (parsedUrl.pathname && (parsedUrl.pathname.includes('..') || parsedUrl.pathname.includes('//')))
+            return false;
+        return true;
+    } catch (e) {
+        console.error(`Invalid URL: ${urlString} - ${e.message}`);
+        return false;
+    }
+}
+
 async function downloadFile(url, fileName, override = false) {
-    const downloadFolder = process.platform === 'win32' ? `${process.cwd()}/downloads` : '/tmp/downloads';
-    const fileLocalPath = `${downloadFolder}/${fileName}`;
+    const fileLocalPath =
+        process.env.NODE_ENV == 'prod' ? `/tmp/${fileName}` : `${process.cwd()}/downloads/${fileName}`;
 
     if (!override) {
         const existLocalApp = fs.existsSync(fileLocalPath);
@@ -13,9 +55,13 @@ async function downloadFile(url, fileName, override = false) {
         }
     }
 
-    console.log(`Downloading file from ${url} to ${fileLocalPath}`);
+    // SSRF protection: Only allow URLs from trusted hosts
+    if (!isAllowedUrl(url)) {
+        console.error(`Blocked attempt to download from disallowed URL: ${url}`);
+        return null;
+    }
 
-    fs.mkdirSync(downloadFolder, { recursive: true });
+    console.log(`Downloading file from ${url} to ${fileLocalPath}`);
 
     let downloadResponse = null;
     try {

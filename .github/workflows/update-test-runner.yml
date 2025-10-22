@@ -45,3 +45,5 @@ jobs:
         with:
             ref: ${{ needs.update-test-runner.outputs.newrev }}
         secrets: inherit
+        permissions:
+            contents: write
