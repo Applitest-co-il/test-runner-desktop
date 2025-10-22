@@ -5,26 +5,14 @@ const express = require('express');
 const cors = require('cors');
 
 const { downloadFile } = require('./download-file.js');
-const { runTests, testApiCall, libVersion } = require('@applitest/test-runner');
+const { runTests, testApiCall, openSession, closeSession, runSession, libVersion } = require('@applitest/test-runner');
 
-const app = express();
-app.use(cors());
-app.use(express.json({ limit: '500KB' }));
-
-app.get('/version', (_, res) => {
-    res.status(200).json({ version: libVersion.version });
-});
-
-app.patch('/test-runner', async (req, res) => {
-    console.log('Test runner started');
-
-    if (!req.body) {
-        res.status(400).send('No data found');
-        return;
+async function preProcessOptions(options) {
+    if (!options) {
+        return false;
     }
 
-    const options = req.body;
-
+    // Additional checks can be added here
     if (['mobile', 'mixed'].includes(options?.runConfiguration?.runType)) {
         console.log('Received mobile run configuration');
         const session = options.runConfiguration.sessions.find((session) => session.type === 'mobile');
@@ -34,8 +22,8 @@ app.patch('/test-runner', async (req, res) => {
 
             const appLocalPath = await downloadFile(url, appName);
             if (!appLocalPath) {
-                res.status(500).send('App download failed');
-                return;
+                console.error('App download failed');
+                return false;
             }
             session.appium.app = appLocalPath;
         }
@@ -44,7 +32,31 @@ app.patch('/test-runner', async (req, res) => {
     } else if (options?.runConfiguration?.runType === 'api') {
         console.log('Received API run configuration');
     } else {
-        res.status(400).send('Invalid run type - only mobile supported .... so far....');
+        return false;
+    }
+
+    return true;
+}
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '500KB' }));
+
+app.get('/version', (_, res) => {
+    res.status(200).json({ version: libVersion.version });
+});
+
+app.post('/test-runner', async (req, res) => {
+    console.log('Test runner started');
+
+    if (!req.body) {
+        res.status(400).send('No data found');
+        return;
+    }
+
+    const options = req.body;
+    if (!(await preProcessOptions(options))) {
+        res.status(400).send('Invalid configuration');
         return;
     }
 
@@ -76,7 +88,71 @@ app.patch('/test-runner', async (req, res) => {
     res.status(200).json(output);
 });
 
-app.patch('/test-api-call', async (req, res) => {
+app.post('/test-runner/session', async (req, res) => {
+    console.log('Test runner open session started');
+
+    if (!req.body) {
+        res.status(400).send('No data found');
+        return;
+    }
+
+    const options = req.body;
+    if (!(await preProcessOptions(options))) {
+        res.status(400).send('Invalid configuration');
+        return;
+    }
+
+    let output = {};
+    try {
+        output = await openSession(options);
+    } catch (error) {
+        console.log(`Error opening debug session: ${error}`);
+    }
+
+    res.status(200).json(output);
+});
+
+app.patch('/test-runner/session/:sessionId', async (req, res) => {
+    console.log('Test runner run debug steps started');
+
+    if (!req.body) {
+        res.status(400).send('No data found');
+        return;
+    }
+
+    const sessionId = req.params.sessionId;
+    const options = req.body.options;
+
+    let output = {};
+    try {
+        output = await runSession(sessionId, options);
+    } catch (error) {
+        console.log(`Error running session: ${error}`);
+    }
+
+    res.status(200).json(output);
+});
+
+app.delete('/test-runner/session/:sessionId', async (req, res) => {
+    console.log('Test runner close session started');
+
+    const sessionId = req.params.sessionId;
+    if (!sessionId) {
+        res.status(400).send('No session ID found');
+        return;
+    }
+
+    let output = {};
+    try {
+        output = await closeSession(sessionId);
+    } catch (error) {
+        console.log(`Error closing session: ${error}`);
+    }
+
+    res.status(200).json(output);
+});
+
+app.patch('/api', async (req, res) => {
     console.log('Test API call started');
 
     if (!req.body) {
