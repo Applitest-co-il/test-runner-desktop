@@ -195,11 +195,11 @@ async function killServerProcess(timeoutMs = 3000) {
                 mainWindow.webContents.send('server-status', { running: false });
                 mainWindow.webContents.send('server-log', {
                     type: 'info',
-                    message: 'Test Runner server stopped'
+                    message: 'TestRunner server stopped'
                 });
             }
 
-            return { success: true, message: 'Server stopped successfully' };
+            return { success: true, message: 'Stopping server completed' };
         } else {
             // Fallback for process-based server (shouldn't happen in packaged app)
             if (serverProcess.kill) {
@@ -422,11 +422,11 @@ ipcMain.handle('start-server', async () => {
                 // Send only one server started message
                 mainWindow.webContents.send('server-log', {
                     type: 'info',
-                    message: `Test Runner server started on port ${PORT}`
+                    message: `TestRunner server started on port ${PORT}`
                 });
             }
 
-            return { success: true, message: `Server started on port ${PORT}` };
+            return { success: true, message: `Starting process completed` };
         } else {
             // Restore original console methods on failure
             if (originalConsoleLog && originalConsoleError) {

@@ -38,7 +38,7 @@
         "prettier": "^3.4.2"
     },
     "dependencies": {
-        "@applitest/test-runner": "^0.9.90",
+        "@applitest/test-runner": "^0.10.3",
         "archiver-utils": "^5.0.2",
         "axios": "^1.12.2",
         "cors": "^2.8.5",
