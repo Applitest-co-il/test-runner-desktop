@@ -157,11 +157,11 @@ jobs:
             - name: Verify build after creation
               run: |
                   echo "Checking if app was built..."
-                  if [ -d "dist/mac/ApplitestLocalRunner.app" ]; then
+                  if [ -d "dist/ApplitestLocalRunner-mac.dmg" ]; then
                       echo "✅ App built successfully"
                       echo "Checking signature status..."
-                      codesign -dv --verbose=4 "dist/mac/ApplitestLocalRunner.app" || echo "App is unsigned (expected for CI build)"
-                      ls -la "dist/mac/"
+                      codesign -dv --verbose=4 "dist/ApplitestLocalRunner-mac.dmg" || echo "App is unsigned (expected for CI build)"
+                      ls -la "dist/"
                   else
                       echo "❌ App not found in expected location, listing dist contents..."
                       find dist -name "*.app" -type d || echo "No .app bundles found"
