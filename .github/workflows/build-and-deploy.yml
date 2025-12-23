@@ -151,20 +151,51 @@ jobs:
               env:
                   USE_HARD_LINKS: false
               run: |
-                  echo "Building unsigned macOS application for CI..."
+                  echo "Building macOS application for CI..."
                   npm run build:mac
+
+            - name: Ad-hoc sign the application
+              run: |
+                  echo "Ad-hoc signing the application to prevent macOS Gatekeeper issues..."
+
+                  # Find the .app bundle
+                  APP_PATH=$(find dist -name "*.app" -type d | head -n 1)
+
+                  if [ -z "$APP_PATH" ]; then
+                      echo "❌ No .app bundle found"
+                      exit 1
+                  fi
+
+                  echo "Found app at: $APP_PATH"
+
+                  # Ad-hoc sign the app bundle with deep signing
+                  codesign --force --deep --sign - "$APP_PATH"
+
+                  echo "✅ App signed successfully"
+
+                  # Verify the signature
+                  codesign -dv --verbose=4 "$APP_PATH"
+
+                  # Also sign any DMG that was created
+                  DMG_PATH=$(find dist -name "*.dmg" -type f | head -n 1)
+                  if [ -n "$DMG_PATH" ]; then
+                      echo "Signing DMG at: $DMG_PATH"
+                      codesign --force --sign - "$DMG_PATH"
+                      echo "✅ DMG signed successfully"
+                  fi
 
             - name: Verify build after creation
               run: |
                   echo "Checking if app was built..."
-                  if [ -d "dist/ApplitestLocalRunner-mac.dmg" ]; then
+                  if [ -f "dist/ApplitestLocalRunner-mac.dmg" ]; then
                       echo "✅ App built successfully"
                       echo "Checking signature status..."
-                      codesign -dv --verbose=4 "dist/ApplitestLocalRunner-mac.dmg" || echo "App is unsigned (expected for CI build)"
+                      codesign -dv --verbose=4 "dist/ApplitestLocalRunner-mac.dmg" || echo "Signature check failed"
                       ls -la "dist/"
                   else
                       echo "❌ App not found in expected location, listing dist contents..."
                       find dist -name "*.app" -type d || echo "No .app bundles found"
+                      find dist -name "*.dmg" -type f || echo "No .dmg files found"
                   fi
 
             - name: Configure AWS Credentials

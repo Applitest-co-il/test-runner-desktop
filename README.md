@@ -59,35 +59,7 @@ npm run debug
 npm run build:win    # Windows portable
 npm run build:mac    # macOS DMG
 
-# Build for all platforms
-npm run build:all
 ```
-
-## 🔐 Code Signing
-
-The project includes self-signed certificate setup for code signing:
-
-### Windows
-
-```bash
-# Generate self-signed certificate (requires Admin privileges)
-npm run create-enhanced-cert
-
-# Build with signing
-npm run build:win
-```
-
-### macOS
-
-```bash
-# Generate ad-hoc certificate
-npm run create-mac-cert
-
-# Build with signing
-npm run build:mac:signed
-```
-
-For detailed signing instructions, see [SIGNING.md](SIGNING.md).
 
 ## 📋 Usage
 
