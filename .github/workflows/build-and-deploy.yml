@@ -154,36 +154,6 @@ jobs:
                   echo "Building macOS application for CI..."
                   npm run build:mac
 
-            - name: Ad-hoc sign the application
-              run: |
-                  echo "Ad-hoc signing the application to prevent macOS Gatekeeper issues..."
-
-                  # Find the .app bundle
-                  APP_PATH=$(find dist -name "*.app" -type d | head -n 1)
-
-                  if [ -z "$APP_PATH" ]; then
-                      echo "❌ No .app bundle found"
-                      exit 1
-                  fi
-
-                  echo "Found app at: $APP_PATH"
-
-                  # Ad-hoc sign the app bundle with deep signing
-                  codesign --force --deep --sign - "$APP_PATH"
-
-                  echo "✅ App signed successfully"
-
-                  # Verify the signature
-                  codesign -dv --verbose=4 "$APP_PATH"
-
-                  # Also sign any DMG that was created
-                  DMG_PATH=$(find dist -name "*.dmg" -type f | head -n 1)
-                  if [ -n "$DMG_PATH" ]; then
-                      echo "Signing DMG at: $DMG_PATH"
-                      codesign --force --sign - "$DMG_PATH"
-                      echo "✅ DMG signed successfully"
-                  fi
-
             - name: Verify build after creation
               run: |
                   echo "Checking if app was built..."
@@ -209,7 +179,7 @@ jobs:
               run: |
                   echo "Copy to sync folder"
                   mkdir -p ./dist/sync
-                  cp ./dist/ApplitestLocalRunner-mac.dmg ./dist/sync/ApplitestLocalRunner-macos13.dmg
+                  cp ./dist/ApplitestLocalRunner-mac.dmg ./dist/sync/ApplitestLocalRunner-macos.dmg
                   echo "Syncing to S3"
                   aws s3 sync ./dist/sync s3://${{ vars.AWS_S3 }}/downloads
                   aws cloudfront create-invalidation --distribution-id=${{ vars.AWS_CLOUDFRONT }}  --paths "/downloads/*"

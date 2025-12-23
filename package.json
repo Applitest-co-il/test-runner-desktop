@@ -119,12 +119,11 @@
             ],
             "icon": "build/icon-512.png",
             "category": "public.app-category.developer-tools",
-            "hardenedRuntime": true,
+            "hardenedRuntime": false,
             "gatekeeperAssess": false,
             "entitlements": "build/entitlements.mac.plist",
             "entitlementsInherit": "build/entitlements.mac.plist",
             "type": "distribution",
-            "identity": null,
             "extendInfo": {
                 "LSUIElement": false,
                 "CFBundleDocumentTypes": [
